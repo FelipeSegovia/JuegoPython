@@ -1,34 +1,96 @@
-from xmlrpc.server import SimpleXMLRPCServer
-server = SimpleXMLRPCServer(("192.168.0.2", 8000))
+import socket
+import sys
+import threading
+from time import gmtime, strftime
+import time
+from queue import Queue
 
-matriz = []
-archivo = open('mapa.txt','r') # este es el mapa inicial
-for linea in archivo:
-    matriz.append(linea.strip("\r\n"))
-archivo.close()
+NUMERO_DE_HILOS = 2
+NUMERO_JOBS = [1, 2]
+cola = Queue()
 
-def resetear_mapa():
-    archivo = open ('mapa_m.txt','a') # reseteo el mapa cuando todos los jugadores salen de la partida o esta termina
-    #for i in range(len(matriz)):
-    #    archivo.write(matriz[i])
-    #archivo.close()
-    #return 1;
+conexiones = []
+direcciones = []
+
+def crear_socket():
+    try:
+        global host
+        global puerto
+        global socket_servidor
+
+        host  = "192.168.0.16"
+        puerto = 8000
+        socket_servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except socket.error as msg:
+        print("Error al crear socket: "+ str(msg))
+
+def conectar_socket():
+    try:
+        global host
+        global puerto
+        global socket_servidor
+        print("Socket conectado: "+ str(puerto))
+
+        socket_servidor.bind((host,puerto))
+        socket_servidor.listen(5) #acepta 5 conexiones 
+    except socket.error as msg:
+        print("Error al conectar el socket: "+ str(msg)+"\nReinentando...")
+        conectar_socket()
+
+def aceptar_conexiones():
+    for c in conexiones:
+        c.close()
+
+    #Vacio las conexiones y direcciones
+    del conexiones[:]
+    del direcciones[:]
     
-def mostrar_mapa():
-    matriz_m = []
-    archivo = open('mapa_m.txt','r') # este es el mapa que se va a ir modificando
-    for linea in archivo:
-        matriz_m.append(linea.strip("\r\n"))
-    archivo.close()
-    return (matriz_m)
+    while True:
+        try:
+            con,dir = socket_servidor.accept()
+            socket_servidor.setblocking(1) #prevengo el timeout
+
+            conexiones.append(con)
+
+            print("({})Conexion desde {} a sido establecida!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()),dir[0]))
+            con.send(bytes("Bienvenido al servidor!","utf-8"))
+        except:
+            print("Error en la conexion")
+
+def crear_hilos():
+    for _ in range(NUMERO_DE_HILOS):
+        hilo = threading.Thread(target=iniciar)
+        hilo.daemon = True
+        hilo.start()
+
+def iniciar():
+    while True:
+        x = cola.get()
+        if x == 1:
+            crear_socket()
+            conectar_socket()
+            aceptar_conexiones()
+        
+        cola.task_done()
+
+def crear_trabajos():
+    for x in NUMERO_JOBS:
+        cola.put(x)
+    cola.join()
+
+def Main():
+
+    print("Hola desde el servidor")
+    crear_hilos()
+    crear_trabajos()
+    while True:
+        print("Esperando conexion cliente")
+        cliente_socket, direccion = socket_servidor.accept()
+        print("({})Conexion desde {} a sido establecida!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()),direccion[0]))
+        cliente_socket.send(bytes("Bienvenido al servidor!","utf-8"))
+    
+        
 
 
-def colocar_jugador(id):
-    return 1
-
-
-print("Esperando al cliente.. puerto 8000")
-server.register_function(resetear_mapa, "resetear_mapa")
-server.register_function(mostrar_mapa, "mostrar_mapa")
-server.register_function(colocar_jugador,"colocar_jugador")
-server.serve_forever()
+if __name__ == "__main__":
+    Main()
