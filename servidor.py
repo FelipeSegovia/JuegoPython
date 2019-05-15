@@ -18,7 +18,7 @@ def crear_socket():
         global puerto
         global socket_servidor
 
-        host  = "10.3.132.58"
+        host  = "192.168.1.20"
         puerto = 8000
         socket_servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     except socket.error as msg:
@@ -51,9 +51,17 @@ def aceptar_conexiones():
             socket_servidor.setblocking(1) #prevengo el timeout
 
             conexiones.append(con)
+            direcciones.append(dir)
 
             print("({})Conexion desde {} a sido establecida!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()),dir[0]))
-            con.send(bytes("Bienvenido al servidor!","utf-8"))
+            #Envio datos del servidor al cliente
+            #con.send(bytes("Bienvenido al servidor!","utf-8"))
+
+            #Recibo datos desde el cliente al servidor
+            #dato = con.recv(1024)
+            #print('Recibi: {!r}'.format(dato))
+            #con.sendall(dato)
+            
             
         except:
             print("Error en la conexion")
@@ -63,6 +71,7 @@ def crear_hilos():
         hilo = threading.Thread(target=iniciar)
         hilo.daemon = True
         hilo.start()
+
 
 def iniciar():
     while True:
