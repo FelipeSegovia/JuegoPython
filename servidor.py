@@ -18,7 +18,7 @@ def crear_socket():
         global puerto
         global socket_servidor
 
-        host  = "192.168.0.16"
+        host  = "10.3.132.58"
         puerto = 8000
         socket_servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     except socket.error as msg:
@@ -54,6 +54,7 @@ def aceptar_conexiones():
 
             print("({})Conexion desde {} a sido establecida!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()),dir[0]))
             con.send(bytes("Bienvenido al servidor!","utf-8"))
+            
         except:
             print("Error en la conexion")
 
@@ -83,11 +84,8 @@ def Main():
     print("Hola desde el servidor")
     crear_hilos()
     crear_trabajos()
-    while True:
-        print("Esperando conexion cliente")
-        cliente_socket, direccion = socket_servidor.accept()
-        print("({})Conexion desde {} a sido establecida!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()),direccion[0]))
-        cliente_socket.send(bytes("Bienvenido al servidor!","utf-8"))
+
+        
     
         
 
