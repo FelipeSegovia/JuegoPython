@@ -17,7 +17,7 @@ def threaded(socket_del_cliente):
             print_lock.release() 
             break
         # le respondo al cliente
-        mensaje_del_servidor=" soy el servidor pao culiao"
+        mensaje_del_servidor=" soy el servidor"
         socket_del_cliente.send(mensaje_del_servidor.encode()) 
     socket_del_cliente.close() 
   

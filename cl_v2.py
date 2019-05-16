@@ -6,7 +6,7 @@ def Main():
   
     un_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
     un_socket.connect((host,port)) 
-    message = "hola servidor culiao"
+
     while True: 
         un_socket.send(message.encode())
         dato = un_socket.recv(1024).decode() 
