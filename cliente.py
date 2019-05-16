@@ -1,73 +1,68 @@
-import socket
-import os
-import subprocess
-import time
-import threading
+#!/usr/bin/env python3
+"""Script for Tkinter GUI chat client."""
+from socket import AF_INET, socket, SOCK_STREAM
+from threading import Thread
+import tkinter
 
-apagar = False
-def recibir(nombre,socket):
-    while not apagar:
+
+def receive():
+    """Handles receiving of messages."""
+    while True:
         try:
-            while True:
-                data = socket.recv(1024)
-                print(str(data))
-        except:
-            pass
-            
-def Main():
-    
-    host = "192.168.1.20"
-    puerto = 8000
+            msg = client_socket.recv(BUFSIZ).decode("utf8")
+            msg_list.insert(tkinter.END, msg)
+        except OSError:  # Possibly client has left the chat.
+            break
 
-    socket_cliente = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    socket_cliente.connect((host,puerto))
 
-    for i in range(5):
-        threading.Thread(target=recibir,args=("Hilo",socket_cliente)).start()
-    
-    alias = input("Ingrese su nombre: ")
+def send(event=None):  # event is passed by binders.
+    """Handles sending of messages."""
+    msg = my_msg.get()
+    my_msg.set("")  # Clears input field.
+    client_socket.send(bytes(msg, "utf8"))
+    if msg == "{quit}":
+        client_socket.close()
+        top.quit()
 
-    mensaje = input(alias+ ": ")
 
-    while mensaje != 'q':
-        if mensaje != '':
-            socket_cliente.sendto("{}->{}".format(alias,mensaje).encode("utf-8"),(host,puerto))
+def on_closing(event=None):
+    """Esta es la funcion para cerrar la ventana."""
+    my_msg.set("{quit}")
+    send()
 
-        mensaje = input(alias+ ": ")
-        time.sleep(0.1)
-    
-    socket_cliente.close()
-    """
-    mensaje_servidor = socket_cliente.recv(1024)
-    mensaje_servidor = mensaje_servidor.decode("utf-8")
-    print(str(mensaje_servidor))
+top = tkinter.Tk()
+top.title("Chatter")
 
-    alias = input("Ingrese su nombre: ")
+messages_frame = tkinter.Frame(top)
+my_msg = tkinter.StringVar()  # For the messages to be sent.
+my_msg.set("Ingresa tu mensaje.")
+scrollbar = tkinter.Scrollbar(messages_frame)  # To navigate through past messages.
+# Following will contain the messages.
+msg_list = tkinter.Listbox(messages_frame, height=15, width=50, yscrollcommand=scrollbar.set)
+scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
+msg_list.pack()
+messages_frame.pack()
 
-    mensaje = ''
+entry_field = tkinter.Entry(top, textvariable=my_msg)
+entry_field.bind("<Return>", send)
+entry_field.pack()
+send_button = tkinter.Button(top, text="Enviar", command=send)
+send_button.pack()
 
-    while True:
-        if mensaje !='':
-            socket_cliente.sendto("{}->{}".format(alias,mensaje).encode("utf-8"),(host,puerto))
-        mensaje = input(alias+"->")
-        data = socket_cliente.recv(1024)
-        data = data.decode("utf-8")
-        print(str(data))
-    """
-    
-    """
-    while True:
-        data = socket_cliente.recv(1024)
-        if data[:2].decode("utf-8") == 'cd':
-            os.chdir(data[3:].decode("utf-8"))
-        if len(data) > 0:
-            cmd = subprocess.Popen(data[:].decode("utf-8"),shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-            output_byte = cmd.stdout.read() + cmd.stderr.read()
-            output_str = str(output_byte,"utf-8")
-            currentWD = os.getcwd() + "> "
-            socket_cliente.send(str.encode(output_str + currentWD))
-            print(output_str)
-    """
+top.protocol("WM_DELETE_WINDOW", on_closing)
 
-if __name__ == "__main__":
-    Main()
+#----Now comes the sockets part----
+HOST = "192.168.1.20"
+PORT = 9999
+
+
+BUFSIZ = 1024
+ADDR = (HOST, PORT)
+
+client_socket = socket(AF_INET, SOCK_STREAM)
+client_socket.connect(ADDR)
+
+receive_thread = Thread(target=receive)
+receive_thread.start()
+tkinter.mainloop()  # Starts GUI execution.

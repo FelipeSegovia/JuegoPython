@@ -1,66 +1,63 @@
-import socket
-import sys
-import threading
-from time import gmtime, strftime
-import time
-from queue import Queue
+#!/usr/bin/env python3
+"""Server for multithreaded (asynchronous) chat application."""
+from socket import AF_INET, socket, SOCK_STREAM
+from threading import Thread
 
-NUMERO_DE_HILOS = 2
-NUMERO_JOBS = [1, 2]
-cola = Queue()
 
-conexiones = []
-direcciones = []
-
-host = "192.168.1.20"
-puerto = 8000
-socket_servidor = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-
-socket_servidor.bind((host,puerto))
-socket_servidor.listen(5)
-def iniciar():
-    for c in conexiones:
-        c.close()
-
-    #Vacio las conexiones y direcciones
-    del conexiones[:]
-    del direcciones[:]
-    
+def accept_incoming_connections():
+    """Sets up handling for incoming clients."""
     while True:
-        try:
-            con,dir = socket_servidor.accept()
-            socket_servidor.setblocking(1) #prevengo el timeout
+        client, client_address = SERVER.accept()
+        print("%s:%s ha sido conectado." % client_address)
+        client.send(bytes("Escribe!", "utf8"))
+        addresses[client] = client_address
+        Thread(target=handle_client, args=(client,)).start()
 
-            conexiones.append(con)
-            direcciones.append(dir)
 
-            print("({})Conexion desde {} a sido establecida!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()),dir[0]))
-            #Envio datos del servidor al cliente
-            con.send(bytes("Bienvenido al servidor!","utf-8"))
+def handle_client(client):  # Takes client socket as argument.
+    """Handles a single client connection."""
 
-            #Recibo datos desde el cliente al servidor
-            dato = con.recv(1024)
-            print(dir[0])
-            print('Recibi: {!r}'.format(dato))
-            for direccion in direcciones:
-                if direccion != dir:
-                    con.sendall(dato)
-            
-            
-        except:
-            print("Error en la conexion")
-    
+    name = client.recv(BUFSIZ).decode("utf8")
+    welcome = 'bienvenido %s! si quieres salir escribe {quit}.' % name
+    client.send(bytes(welcome, "utf8"))
+    msg = "%s ha entrado al chat!" % name
+    broadcast(bytes(msg, "utf8"))
+    clients[client] = name
 
-def Main():
+    while True:
+        msg = client.recv(BUFSIZ)
+        if msg != bytes("{quit}", "utf8"):
+            broadcast(msg, name+": ")
+        else:
+            client.send(bytes("{quit}", "utf8"))
+            client.close()
+            del clients[client]
+            broadcast(bytes("%s ha salido del chat." % name, "utf8"))
+            break
 
-    for _ in range(NUMERO_DE_HILOS):
-        hilo = threading.Thread(target=iniciar)
-        hilo.daemon = True
-        hilo.start()
-    
-    for x in NUMERO_JOBS:
-        cola.put(x)
-    cola.join()
+
+def broadcast(msg, prefix=""):  # prefix is for name identification.
+    """Broadcasts a message to all the clients."""
+
+    for sock in clients:
+        sock.send(bytes(prefix, "utf8")+msg)
+
+        
+clients = {}
+addresses = {}
+
+HOST = '192.168.1.20'
+PORT = 9999
+BUFSIZ = 1024
+ADDR = (HOST, PORT)
+
+SERVER = socket(AF_INET, SOCK_STREAM)
+SERVER.bind(ADDR)
 
 if __name__ == "__main__":
-    Main()
+    SERVER.listen(5)
+    print("Esperando conexion...")
+    ACCEPT_THREAD = Thread(target=accept_incoming_connections)
+    ACCEPT_THREAD.start()
+    ACCEPT_THREAD.join()
+    SERVER.close()
