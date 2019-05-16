@@ -16,7 +16,7 @@ def receive():
 
 
 def send(event=None):  # event is passed by binders.
-    """Handles sending of messages."""
+    """maneja los mensajes enviados."""
     msg = my_msg.get()
     my_msg.set("")  # Clears input field.
     client_socket.send(bytes(msg, "utf8"))
@@ -31,7 +31,7 @@ def on_closing(event=None):
     send()
 
 top = tkinter.Tk()
-top.title("Chatter")
+top.title("Chat")
 
 messages_frame = tkinter.Frame(top)
 my_msg = tkinter.StringVar()  # For the messages to be sent.
@@ -53,7 +53,7 @@ send_button.pack()
 top.protocol("WM_DELETE_WINDOW", on_closing)
 
 #----Now comes the sockets part----
-HOST = "192.168.1.20"
+HOST = "10.3.132.21"
 PORT = 9999
 
 

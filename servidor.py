@@ -3,10 +3,10 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 
-
 def accept_incoming_connections():
     """Sets up handling for incoming clients."""
     while True:
+
         client, client_address = SERVER.accept()
         print("%s:%s ha sido conectado." % client_address)
         client.send(bytes("Escribe!", "utf8"))
@@ -15,25 +15,29 @@ def accept_incoming_connections():
 
 
 def handle_client(client):  # Takes client socket as argument.
-    """Handles a single client connection."""
+        """Handles a single client connection."""
 
-    name = client.recv(BUFSIZ).decode("utf8")
-    welcome = 'bienvenido %s! si quieres salir escribe {quit}.' % name
-    client.send(bytes(welcome, "utf8"))
-    msg = "%s ha entrado al chat!" % name
-    broadcast(bytes(msg, "utf8"))
-    clients[client] = name
+        name = client.recv(BUFSIZ).decode("utf8")
+        welcome = 'bienvenido %s! si quieres salir escribe {quit}.' % name
+        client.send(bytes(welcome, "utf8"))
+        msg = "%s ha entrado al chat!" % name
+        broadcast(bytes(msg, "utf8"))
+        clients[client] = name
 
-    while True:
-        msg = client.recv(BUFSIZ)
-        if msg != bytes("{quit}", "utf8"):
-            broadcast(msg, name+": ")
+        print("Tam: "+str(len(clients)))
+        if str(len(clients)) < "3":
+                while True:
+                        msg = client.recv(BUFSIZ)
+                        if msg != bytes("{quit}", "utf8"):
+                                broadcast(msg, name+": ")
+                        else:
+                                client.send(bytes("{quit}", "utf8"))
+                                client.close()
+                                del clients[client]
+                                broadcast(bytes("%s ha salido del chat." % name, "utf8"))
+                                break
         else:
-            client.send(bytes("{quit}", "utf8"))
-            client.close()
-            del clients[client]
-            broadcast(bytes("%s ha salido del chat." % name, "utf8"))
-            break
+                print("Cliente invalido intenta escribir")
 
 
 def broadcast(msg, prefix=""):  # prefix is for name identification.
@@ -46,7 +50,7 @@ def broadcast(msg, prefix=""):  # prefix is for name identification.
 clients = {}
 addresses = {}
 
-HOST = '192.168.1.20'
+HOST = '10.3.132.21'
 PORT = 9999
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
@@ -55,7 +59,8 @@ SERVER = socket(AF_INET, SOCK_STREAM)
 SERVER.bind(ADDR)
 
 if __name__ == "__main__":
-    SERVER.listen(5)
+    SERVER.listen(2)
+    #SERVER.setblocking(False)
     print("Esperando conexion...")
     ACCEPT_THREAD = Thread(target=accept_incoming_connections)
     ACCEPT_THREAD.start()
