@@ -1,2 +1,2 @@
 # JuegoPython
-Evaluación 1 Sistemas Distribuidos Cliente-Servidor, interbloqueo, hilos, TCP
+Evaluación 1 Sistemas Distribuidos Cliente-Servidor, interbloqueo, hilos, socket
