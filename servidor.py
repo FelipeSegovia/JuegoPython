@@ -4,7 +4,7 @@ from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 
 def accept_incoming_connections():
-    """Sets up handling for incoming clients."""
+    """Configura el manejo para los clientes entrantes."""
     while True:
 
         client, client_address = SERVER.accept()
@@ -14,8 +14,8 @@ def accept_incoming_connections():
         Thread(target=handle_client, args=(client,)).start()
 
 
-def handle_client(client):  # Takes client socket as argument.
-        """Handles a single client connection."""
+def handle_client(client):  # Toma el socket del cliente como argumento.
+        """Maneja una unica conexion del cliente"""
 
         name = client.recv(BUFSIZ).decode("utf8")
         welcome = 'bienvenido %s! si quieres salir escribe {quit}.' % name
@@ -40,8 +40,8 @@ def handle_client(client):  # Takes client socket as argument.
                 print("Cliente invalido intenta escribir")
 
 
-def broadcast(msg, prefix=""):  # prefix is for name identification.
-    """Broadcasts a message to all the clients."""
+def broadcast(msg, prefix=""):  # prefijo es para la identificacion del nombre
+    """Transmite un mensaje a todos los clientes"""
 
     for sock in clients:
         sock.send(bytes(prefix, "utf8")+msg)
