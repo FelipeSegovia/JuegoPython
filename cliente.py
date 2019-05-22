@@ -11,14 +11,14 @@ def receive():
         try:
             msg = client_socket.recv(BUFSIZ).decode("utf8")
             msg_list.insert(tkinter.END, msg)
-        except OSError:  # Possibly client has left the chat.
+        except OSError:  # Si el cliente deja el chat.
             break
 
 
-def send(event=None):  # event is passed by binders.
+def send(event=None):  
     """maneja los mensajes enviados."""
     msg = my_msg.get()
-    my_msg.set("")  # Clears input field.
+    my_msg.set("")  
     client_socket.send(bytes(msg, "utf8"))
     if msg == "{quit}":
         client_socket.close()
@@ -34,10 +34,10 @@ top = tkinter.Tk()
 top.title("Chat")
 
 messages_frame = tkinter.Frame(top)
-my_msg = tkinter.StringVar()  # For the messages to be sent.
+my_msg = tkinter.StringVar()  # para enviar los mensajes
 my_msg.set("Ingresa tu mensaje.")
-scrollbar = tkinter.Scrollbar(messages_frame)  # To navigate through past messages.
-# Following will contain the messages.
+scrollbar = tkinter.Scrollbar(messages_frame)  # Para subir y bajar por el chat "scrollbar"
+# componentes de la ventana y el contenedor
 msg_list = tkinter.Listbox(messages_frame, height=15, width=50, yscrollcommand=scrollbar.set)
 scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
 msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
@@ -52,7 +52,7 @@ send_button.pack()
 
 top.protocol("WM_DELETE_WINDOW", on_closing)
 
-#----Now comes the sockets part----
+#----Se especifica el socket----
 HOST = "10.3.132.21"
 PORT = 9999
 
@@ -65,4 +65,4 @@ client_socket.connect(ADDR)
 
 receive_thread = Thread(target=receive)
 receive_thread.start()
-tkinter.mainloop()  # Starts GUI execution.
+tkinter.mainloop()  # Comienzo de la Ejecucion de la GUI.
